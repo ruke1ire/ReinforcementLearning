@@ -40,8 +40,8 @@ class ValueIterationPolicy(Policy):
 
                 if (self.environment.environment_vector[state] == 0):
                     V_max[-1] = 0
-#                if (self.environment.reward_vector[state] != 0):
-#                    V_max[-1] = 0
+                if (self.environment.reward_vector[state] != 0):
+                    V_max[-1] = 0
 
             R = np.array(R)
             V_max = np.array(V_max)

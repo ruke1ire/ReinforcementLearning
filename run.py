@@ -13,14 +13,14 @@ board = np.array([
     [1,1,1,0,1,1]])
 
 reward = np.array([
-    [13,0,0,0,0,9],
+    [1,0,0,0,0,3],
     [0,0,0,0,0,0],
     [0,0,0,0,0,0],
     [0,0,0,0,0,0]])
 
 env = Environment.Environment(board,reward)
 entity = Entity.Entity(env, inititial_state=board.size-1) 
-policy = Policies.ValueIterationPolicy(entity)
+policy = Policies.ValueIterationPolicy(entity,discount_factor=0.999)
 prev_state = entity.state
 
 while True:

@@ -27,7 +27,3 @@ policy
     - get the reward from the entity -> environment?
 
 
-
-
-!echo %:p
-

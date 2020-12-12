@@ -37,8 +37,8 @@ carriage = Carriage(mass=1, batch=batch, x_pos=window_width//2,
 carriage.insert(space)
 
 # create a linkage
-linkage = Linkage(mass=0.1, x_pos=carriage.body.position[0],
-                  y_pos=carriage.body.position[1]+100, batch=batch)
+linkage = Linkage(mass=0.1, height=250, aspect_ratio=0.09, x_pos=carriage.body.position[0],
+                  y_pos=carriage.body.position[1]+125, batch=batch)
 linkage.insert(space)
 
 

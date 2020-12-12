@@ -3,6 +3,7 @@
 import numpy as np
 from numpy import ndarray
 
+
 class Policy:
     def __init__(self, entity):
         self.entity = entity
@@ -13,8 +14,9 @@ class Policy:
     def get_action(self, current_state: int) -> str:
         raise NotImplementedError()
 
+
 class ValueIterationPolicy(Policy):
-    def __init__(self, entity, discount_factor = 0.9):
+    def __init__(self, entity, discount_factor=0.9):
         super().__init__(entity)
 
         self.discount_factor = discount_factor
@@ -22,9 +24,8 @@ class ValueIterationPolicy(Policy):
         self.value_iteration()
 
     def value_iteration(self):
-        #value iteration iteration (synchronous) algorithm here
-        #TODO: make get_reward return an array, and make finding the value of an a matrix (parallel)
-        self.value = np.zeros_like(self.possible_states)
+        # value iteration iteration (synchronous) algorithm here
+        # TODO: make get_reward return an array, and make finding the value of an a matrix (parallel)
         while True:
             R = []
             V_max = []
@@ -33,7 +34,8 @@ class ValueIterationPolicy(Policy):
                 R.append(self.environment.get_reward(state))
                 V_action = []
                 for action in self.possible_actions:
-                    V_action.append(self.value[self.environment.action_state(state, action)])
+                    V_action.append(
+                        self.value[self.environment.action_state(state, action)])
 
                 V_action = np.array(V_action)
                 V_max.append(np.max(V_action))
@@ -52,35 +54,37 @@ class ValueIterationPolicy(Policy):
         print()
         print(self.value.reshape(self.environment.environment_shape))
 
-    def get_action(self,current_state):
+    def get_action(self, current_state):
         V_action = []
         for action in self.possible_actions:
-            V_action.append(self.value[self.environment.action_state(current_state, action)])
+            V_action.append(
+                self.value[self.environment.action_state(current_state, action)])
 
         V_action = np.array(V_action)
         arg_action = np.argmax(V_action)
 
         return self.possible_actions[arg_action]
 
+
 class PolicyIterationPolicy(Policy):
     def __init__(self, possible_actions):
         super().__init__(possible_actions)
 
     def policy_iteration(self, possible_states):
-        #policy iteration algorithm here
+        # policy iteration algorithm here
         self.possible_states = possible_states
         value = np.zeros_like(self.possible_states)
         pass
 
-    def get_action(self,current_state):
+    def get_action(self, current_state):
         pass
+
 
 class RandomPolicy(Policy):
     def __init__(self, possible_actions):
         super().__init__(possible_actions)
 
-    def get_action(self,current_state):
+    def get_action(self, current_state):
         import random
         action = random.choice(self.possible_actions)
         return action
-

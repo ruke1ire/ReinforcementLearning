@@ -4,7 +4,9 @@ import numpy as np
 import time
 import os
 
-from BoardGame import Environment, Entity, Policies
+from Environment import Environment
+from Policies import ValueIterationPolicy
+from Entity import Entity
 
 board = np.array([
     [1, 0, 1, 1, 1, 1],
@@ -18,9 +20,9 @@ reward = np.array([
     [0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0]])
 
-env = Environment.Environment(board, reward)
-entity = Entity.Entity(env, inititial_state=board.size-1)
-policy = Policies.ValueIterationPolicy(entity, discount_factor=0.999)
+env = Environment(board, reward)
+entity = Entity(env, inititial_state=board.size-1)
+policy = ValueIterationPolicy(entity, discount_factor=0.999)
 prev_state = entity.state
 
 while True:

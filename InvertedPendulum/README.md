@@ -7,10 +7,11 @@
 ## Todo
 
 - [x] Create physics simulation
-- [ ] Think of a training strategy (reward function, game restart, etc.)
+- [x] Think of a training strategy (reward function, game restart, etc.)
 - [ ] Action state discretization
 - [ ] Transition Probability Model (Dynamic Model)
 - [ ] Fitted Value Iteration (Create a model for the value function)
+- [ ] Asynchronously train the network?
 
 ## Draft
 
@@ -21,3 +22,17 @@
 - But we still wouldn't know which action to take... Is there a way to find the action which maximizes the value function? (what if we assume that the actions can't change very rapidly. We would only simulate actions which are similar to the current action and then greedily pick the best action out of those actions. This would save computational time because we would only have to simulate a few possible actions)
 - or we can discretize the action space.
 - If we already have the transition probabilities, why can't we just pick an action that would make the current state close to the target state, without even using the value function? In simple cases, we might not even need the value function, but in some cases, it's not clear or easy to identify the next best state to be in (unlike many control problems) thats the reason why a value function exists.
+
+
+## Training Strategy
+
+1. Input states are the state error.
+2. Similar to NEATRocket we should have the target moving from one side to another.
+3. In every 10-100 time steps, the state transition model should be trained.
+4. Similarly, in every 10-100 time steps, the value function gets updated.
+5. The action state will be discretized since this problem only has 1 Dimension.
+
+## Pendulum
+
+1. The pendulum's top state is 0, and bottom state is PI.
+2. Every rotation, resets the angle so spinning multiple time doesn't matter

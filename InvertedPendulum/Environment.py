@@ -3,6 +3,7 @@
 import numpy as np
 import pyglet
 import pymunk
+import math
 from pymunk.pyglet_util import DrawOptions
 from Pendulum import Linkage, Carriage, Floor, Target, PredictedLinkage
 
@@ -65,7 +66,7 @@ class Environment:
         self.force = 0
         self.FORCE = 2000
         self.enable_random_force = False
-
+        self.save_states = False
 
         @ self.window.event
         def on_draw():
@@ -75,13 +76,13 @@ class Environment:
             self.batch.draw()
 
     def get_state(self):
-        angle = self.linkage.body.angle*100
+        #angle = self.linkage.body.angle
 
-#    angle = math.fmod(self.linkage.body.angle, 2*math.pi)
-#    if(angle > math.pi):
-#        angle = -(2*math.pi-angle)
-#    elif(angle < -math.pi):
-#        angle = (2*math.pi + angle)
+        angle = math.fmod(self.linkage.body.angle, 2*math.pi)
+        if(angle > math.pi):
+            angle = -(2*math.pi-angle)
+        elif(angle < -math.pi):
+            angle = (2*math.pi + angle)
 
         state = np.array([self.carriage.body.position[0], angle,
                           self.carriage.body.velocity[0], self.linkage.body.angular_velocity])
@@ -123,3 +124,6 @@ class Environment:
 
             if(self.keyboard[pyglet.window.key.M] and self.keyboard[pyglet.window.key.LSHIFT]):
                 self.pure_model_prediction = True
+
+            if(self.keyboard[pyglet.window.key.S]):
+                self.save_states = True

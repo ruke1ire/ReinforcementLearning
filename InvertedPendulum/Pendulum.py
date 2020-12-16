@@ -143,8 +143,6 @@ class Target:
 
         self.index = self.index % 2
 
-        print(self.index)
-
         x_pos = x_positions[self.index]
 
         self.move(x_pos, self.body.position[1], 0)
@@ -209,7 +207,7 @@ class PredictedLinkage:
         self.update()
 
     def move2(self, state):
-        angle = state[1]/100
+        angle = state[1]
         # if angle > 0:
         #    pass
         # else:

@@ -24,11 +24,7 @@ def reward_function(states):
     angle = states[1]
     angular_velocity = states[3]
     x = states[0]
-    if x <= 100 or x >=1900:
-        deduct = 100
-    else:
-        deduct = 0
-    reward = 100+100*np.cos(angle) - deduct
+    reward = 10000/((x - 960)**2+0.01)+100+100*np.cos(angle) 
     return reward
 
 if __name__ == "__main__":

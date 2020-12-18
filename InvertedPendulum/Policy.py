@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+import numpy as np
+
 class FittedValueIteration:
     def __init__(self,actions,state_transition_model):
         # array of possible actions
@@ -35,23 +37,29 @@ class ValueIteration:
 
     def get_action(self):
         best_action = None
-        best_value = -100000
+        best_value = 0
+        values = []
         for action in self.actions:
             states = self.stm.predict(action)
             value = self.get_value(states)
+            values.append(value)
             if value > best_value:
                 best_value = value
                 best_action = action
-        print(best_value)
+        values = np.array(values)
+        best_action = np.mean(self.actions[values == np.max(values)])
+        print(best_action,'\t\t\t', best_value)
+        print(values)
         return best_action
     
-    def update_value_function(self):
-        current_states = self.stm.pendulum.get_states()
-        best_value = -100000
+    def update_value_function(self,current_states):
+        #current_states = self.stm.pendulum.get_states()
+        self.stm.pendulum.states = current_states
+        best_value = 0
 
         for action in self.actions:
             predicted_states = self.stm.predict(action)
-            value = self.reward_function(current_states) + self.discount_factor*self.get_value(predicted_states)
+            value = self.reward_function(predicted_states) + self.discount_factor*self.get_value(predicted_states)
             if value > best_value:
                 best_value = value
 
@@ -66,4 +74,4 @@ class ValueIteration:
         if key in self.value_function:
             return self.value_function[key]
         else:
-            return -float('inf')
+            return 0

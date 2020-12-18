@@ -1,80 +1,33 @@
 #!/usr/bin/python3
 
-import torch.optim as optim
-import numpy as np
 import pyglet
-import math
-
-from StateTransitionModel import StateTransitionModel
 from Environment import Environment
+from Policy import ValueIteration
+import numpy as np
+from utils import StatesEncoder, reward_function
+from StateTransitionModel import StateTransitionModel
 
-np.set_printoptions(precision=2)
 
-env = Environment(use = 'train')
+env = Environment()
+stm = StateTransitionModel(env.pendulums[-1]['physics'],dt = env.dt)
 
-state_transition_model = StateTransitionModel()
+action_space = np.linspace(-3000000, 3000000, 21)
+states_max = np.array([1920,np.pi,1500,10])
+states_min = np.array([0,-np.pi,-1500,-10])
+divisions = 20
+states_encoder = StatesEncoder(states_min = states_min, states_max = states_max, divisions=divisions)
 
-state = [env.get_state()]
-forces = [] 
-prev_predicted_state = state[-1]
-
-MAX_TRAINING_SIZE = 10000
-
-def step():
-    global state
-    global forces
-    s = np.array(state)
-    prev_state = s[:-1]
-    current_state = s[1:]
-
-    f = np.array(forces)[:-1]
-    if(env.train == True):
-        state_transition_model.train_step(prev_state, f/env.FORCE, current_state)
+policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.9)
 
 def update(dt):
-    global state
-    global forces
-    global prev_predicted_state
+    force = policy.get_action()
+    if force == None:
+        force = 0
+    env.pendulums[-1]['physics'].force = force
 
-    training_size = 1
+    env.update(dt)
+    policy.update_value_function()
+    #print(list(policy.value_function.values()))
 
-    env.keyboard_handler()
-
-    forces.append(env.force)
-    env.carriage.apply_force(env.force)
-
-    env.space.step(1/60)
-
-    env.linkage.update()
-    env.carriage.update()
-
-    if(len(state) > training_size) and (len(state) < MAX_TRAINING_SIZE):
-        step()
-
-    print(len(state),state[-1])
-    if(len(state) == MAX_TRAINING_SIZE):
-        s = np.array(state)
-        f = np.array(forces)
-
-        np.save('data/states.npy',s)
-        np.save('data/forces.npy',f)
-
-        print("SAVING COMPLETED")
-        pyglet.app.exit()
-
-    state.append(env.get_state())
-
-    if(env.pure_model_prediction == False):
-        predicted_state = state_transition_model.predict(
-            state[-1], forces[-1]/env.FORCE)
-    else:
-        predicted_state = state_transition_model.predict(
-            prev_predicted_state, forces[-1]/env.FORCE)
-
-    prev_predicted_state = predicted_state
-    #print("state:\t\t",state[-1], "previous:\t\t",prev_predicted_state)
-
-    env.predicted_linkage.move2(predicted_state)
-
-pyglet.clock.schedule(update)
+pyglet.clock.schedule_interval(update,env.dt)
 pyglet.app.run()

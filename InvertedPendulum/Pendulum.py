@@ -1,221 +1,131 @@
 #!/usr/bin/python3
 
-import pymunk
-import random
-import pyglet
 import numpy as np
+import pyglet
 import math
+import random
 
+class PendulumPhysics:
+    def __init__(self, initial_states = None, x_range = [0,1920]):
+        if np.any(initial_states == None):
+            initial_states = np.array([0,0,0,0])
+        self.states = initial_states.astype(float)
+        self.clamp_angle()
+        self.linkage_length = 240
+        self.linkage_width = 10
+        self.linkage_mass = 100
+        self.carriage_mass = 100
+        self.gravity = 1000
+        self.force = 0
+        self.x_range = x_range
+        self.max_velocity_x = 1500
+        self.max_velocity_angle = 10
 
-class Linkage:
-    def __init__(self, batch, mass=1, height=250, aspect_ratio=0.1, x_pos=100, y_pos=100):
-        self.mass = mass
-        self.aspect_ratio = aspect_ratio
-        self.height = height
-        self.width = int(self.height*self.aspect_ratio)
-        self.moment = pymunk.moment_for_box(
-            self.mass, (self.width, self.height))
+    def clamp_velocity(self):
+        if self.states[2] >= self.max_velocity_x:
+            self.states[2] = self.max_velocity_x
+        elif self.states[2] <= -self.max_velocity_x:
+            self.states[2] = -self.max_velocity_x
 
-        self.body = pymunk.Body(self.mass, self.moment)
+        if self.states[3] >= self.max_velocity_angle:
+            self.states[3] = self.max_velocity_angle
+        elif self.states[3] <= -self.max_velocity_angle:
+            self.states[3] = -self.max_velocity_angle
 
-        self.shape = pyglet.shapes.Rectangle(
-            0, 0, self.width, self.height, batch=batch)
-        self.shape.anchor_position = (self.width//2, self.height//2)
-        self.shape.color = (random.randint(100, 255), random.randint(
-            100, 255), random.randint(100, 255))
-        self.shape.opacity = 100
+    def clamp_angle(self):
+        angle = math.fmod(self.states[1], 2*math.pi)
+        if(angle > math.pi):
+            angle = -(2*math.pi-angle)
+        elif(angle < -math.pi):
+            angle = (2*math.pi + angle)
 
-        self.body.position = x_pos, y_pos
-        self.body.angle = 0
-        self.body.velocity = 0.0, 0.0
-        self.body.angular_velocity = 0.0
+        self.states[1] = angle
 
-    def update(self):
-        self.body.angular_velocity = 0.99*self.body.angular_velocity
+    def clamp_position(self):
+        if self.states[0] <= self.x_range[0]:
+            self.states[0] = self.x_range[0]
+            self.states[2] = 0.1*abs(self.states[2])
+        elif self.states[0] >= self.x_range[1]:
+            self.states[0] = self.x_range[1]
+            self.states[2] = -0.1*abs(self.states[2])
 
-        self.shape.position = (self.body.position[0], self.body.position[1])
-        self.shape.rotation = -float(self.body.angle)*180/3.1416
+    def step(self,dt):
+        A = np.array([
+            [(self.linkage_mass+self.carriage_mass),-self.linkage_mass*self.linkage_length*np.cos(self.states[1])],
+            [-np.cos(self.states[1]),self.linkage_length]])
+        B = np.array([1,0]).reshape(-1,1)
+        C = np.array([-self.linkage_mass*self.linkage_length*self.states[3]**2*np.sin(self.states[1])-17*self.states[2],self.gravity*np.sin(self.states[1])-20*self.states[3]]).reshape(-1,1)
 
-    def insert(self, space):
-        space.add(self.body)
+        acc = np.linalg.inv(A)@(C+B*self.force)
 
-    def remove(self, space):
-        space.remove(self.body)
-        self.shape.delete()
+        self.states[0] = self.states[0] + self.states[2]*dt + 1/2*acc[0]*(dt**2)
+        self.states[1] = self.states[1] + self.states[3]*dt + 1/2*acc[1]*(dt**2)
+        self.states[2] = self.states[2] + acc[0]*dt
+        self.states[3] = self.states[3] + acc[1]*dt
 
+        self.clamp_position()
+        self.clamp_velocity()
+        self.clamp_angle()
+        self.force = 0
 
-class Carriage:
-    def __init__(self, batch, mass, height=30, aspect_ratio=4, x_pos=100, y_pos=100):
-        self.mass = mass
-        self.height = height
-        self.aspect_ratio = aspect_ratio
-        self.width = int(self.height*self.aspect_ratio)
-        self.moment = pymunk.moment_for_box(
-            self.mass, (self.width, self.height))
+    def get_states(self):
+        return self.states
 
-        self.body = pymunk.Body(self.mass, self.moment)
+class PendulumVisualization:
+    def __init__(self,pendulum_physics,batch):
+        self.pendulum_physics = pendulum_physics
+        self.batch = batch
+        self.linkage_width = pendulum_physics.linkage_width
+        self.linkage_length = pendulum_physics.linkage_length
+        self.carriage_width = 40
+        self.carriage_height = 20
+        self.y = 300
 
-        self.shape = pyglet.shapes.Rectangle(
-            0, 0, self.width, self.height, batch=batch)
-        self.shape.anchor_position = (self.width//2, self.height//2)
-        self.shape.color = (random.randint(100, 255), random.randint(
-            100, 255), random.randint(100, 255))
-        self.shape.opacity = 100
+        self._init_linkage()
+        self._init_carriage()
+    
+    def _init_linkage(self):
+        self.linkage = pyglet.shapes.Rectangle(0, 0, self.linkage_width, self.linkage_length, batch=self.batch)
+        self.linkage.anchor_position = (self.linkage_width//2, 0)
+        self.linkage.color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+        self.linkage.opacity = 100
 
-        self.body.position = x_pos, y_pos
-        self.body.angle = 0
-        self.body.velocity = 0.0, 0.0
-
-    def update(self):
-        self.shape.position = (self.body.position[0], self.body.position[1])
-        self.shape.rotation = -float(self.body.angle)*180/3.1416
-
-    def insert(self, space):
-        space.add(self.body)
-
-    def remove(self, space):
-        space.remove(self.body)
-        self.shape.delete()
-
-    def apply_force(self, force):
-        self.body.apply_force_at_local_point(
-            (force, 0), (0, 0))
-
-
-class Floor:
-    def __init__(self, batch, height=5, width=300, x_pos=100, y_pos=100):
-        self.height = height
-        self.width = width
-
-        self.body = pymunk.Body(body_type=pymunk.Body.STATIC)
-
-        self.shape = pyglet.shapes.Rectangle(
-            0, 0, self.width, self.height, batch=batch)
-        self.shape.anchor_position = (self.width//2, self.height//2)
-        self.shape.color = (random.randint(100, 255), random.randint(
-            100, 255), random.randint(100, 255))
-
-        self.body.position = x_pos, y_pos
-        self.body.angle = 0
-        self.shape.position = (self.body.position[0], self.body.position[1])
-        self.shape.rotation = -float(self.body.angle)*180/3.1416
-
-    def insert(self, space):
-        space.add(self.body)
-
-    def remove(self, space):
-        space.remove(self.body)
-        self.shape.delete()
-
-
-class Target:
-    def __init__(self, batch, height=250, aspect_ratio=0.1, x_pos=100, y_pos=100):
-        # set base body and shape
-        self.body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.height = height
-        self.aspect_ratio = aspect_ratio
-        self.width = int(self.height*self.aspect_ratio)
-
-        self.shape = pyglet.shapes.Rectangle(
-            0, 0, self.width, self.height, batch=batch)
-        self.shape.anchor_position = (self.width//2, self.height//2)
-        self.shape.color = (random.randint(100, 255), random.randint(
-            100, 255), random.randint(100, 255))
-
-        self.shape.opacity = 100
-
-        # set base's position
-        self.body.position = x_pos, y_pos
-
-        self.index = 0
-
-        self.update()
-
-    def insert(self, space):
-        space.add(self.body)
+    def _init_carriage(self):
+        self.carriage = pyglet.shapes.Rectangle(
+            0, 0, self.carriage_width, self.carriage_height, batch=self.batch)
+        self.carriage.anchor_position = (self.carriage_width//2, self.carriage_height//2)
+        self.carriage.color = (random.randint(100, 255), random.randint(100, 255), random.randint(100, 255))
+        self.carriage.opacity = 100
 
     def update(self):
-        self.shape.position = (self.body.position[0], self.body.position[1])
-        self.shape.rotation = -float(self.body.angle)*180/3.1416
+        states = self.pendulum_physics.get_states()
+        self.linkage.position = (states[0],self.y)
+        self.linkage.rotation = -float(states[1])*180/3.1416
 
-    def iterate_position(self, reset=False, window_width=1000):
-        x_positions = [int(window_width*0.1), int(window_width*0.9)]
+        self.carriage.position = (states[0],self.y)
+        self.carriage.rotation = 0
 
-        self.index = self.index % 2
+if __name__ == "__main__":
+    window = pyglet.window.Window(fullscreen=True)
+    window_width = window.width
+    window_height = window.height
+    batch = pyglet.graphics.Batch()
 
-        x_pos = x_positions[self.index]
+    initial_state = np.array([window_width//2,0,0,0.1])
 
-        self.move(x_pos, self.body.position[1], 0)
+    pendulum_physics = PendulumPhysics(initial_states=initial_state)
+    pendulum_visuals = PendulumVisualization(pendulum_physics,batch = batch)
 
-        self.index += 1
+    def update(dt):
+        pendulum_physics.step(dt)
+        pendulum_visuals.update()
+        print("States:",pendulum_physics.get_states())
 
-        return self.index
+    @ window.event
+    def on_draw():
+        window.clear()
+        batch.draw()
 
-    def random_position(self, x_range, not_x_range=[0, 0]):
-        # randomly position the base
-        # not x and not y should be a smaller window than x and y ranges
-        if not ((x_range[0] < not_x_range[0]) or
-                (x_range[1] > not_x_range[1])):
-            raise ValueError("Invalid position ranges")
+    pyglet.clock.schedule(update)
+    pyglet.app.run()
 
-        x_pos = random.randint(x_range[0], x_range[1])
-
-        while((x_pos > not_x_range[0]) and
-                (x_pos < not_x_range[1])):
-            x_pos = random.randint(x_range[0], x_range[1])
-
-        self.move(x_pos, self.body.position[1], 0)
-
-    def move(self, x, y, angle):
-        self.body.position = x, y
-        self.update()
-
-
-class PredictedLinkage:
-    def __init__(self, batch, height=250, aspect_ratio=0.1, x_pos=100, y_pos=100):
-        # set base body and shape
-        self.body = pymunk.Body(body_type=pymunk.Body.KINEMATIC)
-        self.height = height
-        self.aspect_ratio = aspect_ratio
-        self.width = int(self.height*self.aspect_ratio)
-
-        self.shape = pyglet.shapes.Rectangle(
-            0, 0, self.width, self.height, batch=batch)
-        self.shape.anchor_position = (self.width//2, self.height//2)
-        self.shape.color = (random.randint(100, 255), random.randint(
-            100, 255), random.randint(100, 255))
-
-        self.shape.opacity = 100
-
-        # set base's position
-        self.body.position = x_pos, y_pos
-
-        self.index = 0
-
-        self.update()
-
-    def insert(self, space):
-        space.add(self.body)
-
-    def update(self):
-        self.shape.position = (self.body.position[0], self.body.position[1])
-        self.shape.rotation = -float(self.body.angle)*180/3.1416
-
-    def move(self, x, y, angle):
-        self.body.position = x, y
-        self.body.angle = angle
-        self.update()
-
-    def move2(self, state):
-        angle = state[1]
-        # if angle > 0:
-        #    pass
-        # else:
-        #    angle = 2*math.pi + angle
-
-        x_pos = state[0] - self.height/2*math.sin(angle)
-        y_pos = 100+self.height/2*math.cos(angle)
-
-        self.body.position = x_pos, y_pos
-        self.body.angle = angle
-        self.update()

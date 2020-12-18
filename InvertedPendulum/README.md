@@ -28,11 +28,11 @@
 
 1. Input states are the state error.
 2. Similar to NEATRocket we should have the target moving from one side to another.
-3. In every 10-100 time steps, the state transition model should be trained.
-4. Similarly, in every 10-100 time steps, the value function gets updated.
-5. The action state will be discretized since this problem only has 1 Dimension.
+3. In every 10-100 time steps, the value function gets updated.
+4. The action state will be discretized since this problem only has 1 Dimension.
 
 ## Pendulum
 
 1. The pendulum's top state is 0, and bottom state is PI.
 2. Every rotation, resets the angle so spinning multiple time doesn't matter
+

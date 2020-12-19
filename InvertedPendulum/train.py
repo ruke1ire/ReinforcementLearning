@@ -14,20 +14,24 @@ stm = StateTransitionModel(env.pendulums[-1]['physics'],dt = env.dt)
 action_space = np.linspace(-300000, 300000, 5)
 states_max = np.array([1920//2+300,0.5,500,10])
 states_min = np.array([1920//2-300,-0.5,-500,-10])
-divisions = 10
+divisions = 20
 states_encoder = StatesEncoder(states_min = states_min, states_max = states_max, divisions=divisions)
 
 policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.99)
 
 all_states = get_all_states(states_min, states_max, divisions*np.ones(4).astype(int))
 
-ITERATION = 100
+ITERATION = 10
 value_function = None
 
 for iteration in range(ITERATION):
     print("Iteration:",iteration)
     policy.multiple_update_value_function(all_states)
-    value_function = np.array(list(policy.value_function.values()))
+    new_value_function = np.array(list(policy.value_function.values()))
+    if value_function is not None:
+        if np.all((new_value_function - value_function) < 1):
+            break
+    value_function = new_value_function
 
 def update(dt):
 

@@ -23,7 +23,7 @@ def reward_function(states):
     angle = states[1]
     angular_velocity = states[3]
     x = states[0]
-    reward = 10000/((angle)**2+1) + 100000/((960-x)**2+1) + 10000/((angular_velocity)**2+1)
+    reward = 10000000/((angle)**2+1) + 100000/((960-x)**2+1) + 10000/((angular_velocity)**2+1)
     return reward
 
 def get_all_states(states_min, states_max, divisions):

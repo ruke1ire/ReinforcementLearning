@@ -22,6 +22,7 @@ class PendulumPhysics:
         self.carriage_mass = 100
         self.gravity = 1000
         self.force = 0
+        self.reset_states()
 
     def clamp_velocity(self,states):
         if states[2] >= self.max_velocity_x:
@@ -87,7 +88,8 @@ class PendulumPhysics:
         return self.states
 
     def reset_states(self):
-        self.states = np.array([960,0,0,0]).astype(self.states.dtype)
+        self.states = np.array([960,0,0,np.random.randn(1).item()/10]).astype(self.states.dtype)
+        print('reset')
 
 class PendulumVisualization:
     def __init__(self,pendulum_physics,batch):

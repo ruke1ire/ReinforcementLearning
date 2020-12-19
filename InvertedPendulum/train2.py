@@ -14,17 +14,17 @@ np.set_printoptions(threshold=sys.maxsize)
 env = Environment()
 stm = StateTransitionModel(env.pendulums[-1]['physics'],dt = env.dt)
 
-action_space = np.linspace(-500000, 500000, 3)
-states_max = np.array([1920//2+300,0.7,1000,5])
-states_min = np.array([1920//2-300,-0.7,-1000,-5])
+action_space = np.linspace(-250000, 250000, 3)
+states_max = np.array([1920,0.3,1000,5])
+states_min = np.array([0,-0.3,-1000,-5])
 divisions = 10
 states_encoder = StatesEncoder(states_min = states_min, states_max = states_max, divisions=divisions)
 
-policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.9999)
+policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.9)
 
 all_states = get_all_states(states_min, states_max, divisions*np.ones(4).astype(int))
 
-ITERATION = 100
+ITERATION = 30
 value_function = None
 
 for iteration in range(ITERATION):
@@ -32,7 +32,7 @@ for iteration in range(ITERATION):
     policy.multiple_update_value_function(all_states)
     new_value_function = np.array(list(policy.value_function.values()))
     if value_function is not None:
-        if np.all((new_value_function - value_function) < 1e-8):
+        if np.all((new_value_function - value_function) < 1e-3):
             break
     value_function = new_value_function
     print(value_function)
@@ -60,3 +60,4 @@ def update(dt):
 
 pyglet.clock.schedule_interval(update,env.dt)
 pyglet.app.run()
+

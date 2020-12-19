@@ -14,17 +14,17 @@ np.set_printoptions(threshold=sys.maxsize)
 env = Environment()
 stm = StateTransitionModel(env.pendulums[-1]['physics'],dt = env.dt)
 
-action_space = np.linspace(-250000, 250000, 3)
-states_max = np.array([1920,0.3,1000,5])
-states_min = np.array([0,-0.3,-1000,-5])
-divisions = 10
+action_space = np.linspace(-500000, 500000, 3)
+states_max = np.array([1920,0.15,500,3])
+states_min = np.array([0,-0.15,-500,-3])
+divisions = 21
 states_encoder = StatesEncoder(states_min = states_min, states_max = states_max, divisions=divisions)
 
-policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.9)
+policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.99)
 
 all_states = get_all_states(states_min, states_max, divisions*np.ones(4).astype(int))
 
-ITERATION = 30
+ITERATION = 10
 value_function = None
 
 for iteration in range(ITERATION):
@@ -50,7 +50,7 @@ def update(dt):
     current_states = env.pendulums[-1]['physics'].get_states().copy()
 
     print(current_states)
-    if np.any(current_states - states_min < 0) or np.any(states_max - current_states < 0):
+    if abs(current_states[1] > 3):
         env.pendulums[-1]['physics'].reset_states()
         env.pendulums[-1]['physics'].force = 0
 

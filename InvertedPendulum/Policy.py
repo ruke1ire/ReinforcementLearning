@@ -48,7 +48,7 @@ class ValueIteration:
                 best_value = value
                 best_action = action
         values = np.array(values)
-        #best_action = np.mean(self.actions[values == np.max(values)])
+        best_action = np.mean(self.actions[values == np.max(values)])
 #        print(best_action,'\t\t\t', best_value)
 #        print(values)
         return best_action

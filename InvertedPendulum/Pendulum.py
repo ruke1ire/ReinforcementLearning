@@ -88,7 +88,7 @@ class PendulumPhysics:
         return self.states
 
     def reset_states(self):
-        self.states = np.array([960,0,0,np.random.randn(1).item()/10]).astype(self.states.dtype)
+        self.states = np.array([960,0,0,np.random.randn(1).item()/100]).astype(self.states.dtype)
         print('reset')
 
 class PendulumVisualization:

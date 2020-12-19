@@ -4,56 +4,48 @@ import pyglet
 from Environment import Environment
 from Policy import ValueIteration
 import numpy as np
-from utils import StatesEncoder, reward_function
+from utils import StatesEncoder, reward_function, get_all_states
 from StateTransitionModel import StateTransitionModel
 from tqdm import tqdm
-
 
 env = Environment()
 stm = StateTransitionModel(env.pendulums[-1]['physics'],dt = env.dt)
 
-action_space = np.linspace(-1000000, 1000000, 3)
-states_max = np.array([1920,np.pi,1500,10])
-states_min = np.array([0,-np.pi,-1500,-10])
+action_space = np.linspace(-300000, 300000, 5)
+states_max = np.array([1920//2+300,0.5,500,10])
+states_min = np.array([1920//2-300,-0.5,-500,-10])
 divisions = 10
 states_encoder = StatesEncoder(states_min = states_min, states_max = states_max, divisions=divisions)
 
-policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.9)
+policy = ValueIteration(actions=action_space,states_encoder=states_encoder,state_transition_model=stm,reward_function=reward_function,discount_factor = 0.99)
 
-x_series = np.linspace(0,1920,divisions)
-angle_series = np.linspace(-np.pi,np.pi,divisions)
-xdot_series = np.linspace(-1500,1500,divisions)
-anglular_velocity_series = np.linspace(-10,10,divisions)
+all_states = get_all_states(states_min, states_max, divisions*np.ones(4).astype(int))
 
-xx, aa, xxdot, aadot = np.meshgrid(x_series, angle_series, xdot_series, anglular_velocity_series)
-xx = xx.reshape(-1,1)
-aa = aa.reshape(-1,1)
-xxdot = xxdot.reshape(-1,1)
-aadot = aadot.reshape(-1,1)
-
-all_states = np.concatenate((xx,aa,xxdot,aadot),axis=1)
-
-ITERATION = 20
+ITERATION = 100
+value_function = None
 
 for iteration in range(ITERATION):
-    print(iteration)
-    for states in tqdm(all_states):
-        policy.update_value_function(states)
-    print(list(policy.value_function.values()))
-    
-
-
+    print("Iteration:",iteration)
+    policy.multiple_update_value_function(all_states)
+    value_function = np.array(list(policy.value_function.values()))
 
 def update(dt):
-    force = policy.get_action()
+
+    force = policy.get_action(env.pendulums[-1]['physics'].states)
     if force == None:
         force = 0
     env.pendulums[-1]['physics'].force = force
-    #print('force',force)
+
+    current_states = env.pendulums[-1]['physics'].get_states().copy()
+
+    print(current_states)
+    if np.any(current_states - states_min < 0) or np.any(states_max - current_states < 0):
+        env.pendulums[-1]['physics'].reset_states()
+        env.pendulums[-1]['physics'].force = 0
 
     env.update(dt)
-    #policy.update_value_function()
-    #print(list(policy.value_function.values()))
+
+
 
 pyglet.clock.schedule_interval(update,env.dt)
 pyglet.app.run()

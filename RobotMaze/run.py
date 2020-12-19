@@ -22,7 +22,7 @@ reward = np.array([
 
 env = Environment(board, reward)
 entity = Entity(env, inititial_state=board.size-1)
-policy = ValueIterationPolicy(entity, discount_factor=0.999)
+policy = ValueIterationPolicy(entity, discount_factor=0.99)
 prev_state = entity.state
 
 while True:

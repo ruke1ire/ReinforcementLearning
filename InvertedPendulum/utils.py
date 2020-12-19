@@ -2,7 +2,6 @@
 
 import numpy as np
 
-
 class StatesEncoder:
     def __init__(self,states_max, states_min, divisions):
         self.states_max = states_max
@@ -24,8 +23,19 @@ def reward_function(states):
     angle = states[1]
     angular_velocity = states[3]
     x = states[0]
-    reward = 10000/((x - 960)**2+0.01)+100+100*np.cos(angle) 
+    reward = 10000/((angle)**2+1) + 100000/((960-x)**2+1) + 10000/((angular_velocity)**2+1)
     return reward
+
+def get_all_states(states_min, states_max, divisions):
+    series = []
+    for mini, maxi,division in zip(states_min,states_max,divisions):
+        series.append(np.linspace(mini,maxi,division))
+    mesh = np.meshgrid(*series)
+    final = []
+    for m in mesh:
+        final.append(m.reshape(-1))
+    final = np.array(final).T
+    return final
 
 if __name__ == "__main__":
     states_max = np.array([1920,np.pi,1500,10])

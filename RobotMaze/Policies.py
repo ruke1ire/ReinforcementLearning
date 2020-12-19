@@ -49,10 +49,10 @@ class ValueIterationPolicy(Policy):
             V_max = np.array(V_max)
             self.prev_value = self.value
             self.value = R + self.discount_factor*V_max
-            if np.sum(np.abs(self.prev_value - self.value)) < 1e-3:
+            if np.sum(np.abs(self.prev_value - self.value)) < 1e-9:
                 break
-        print()
-        print(self.value.reshape(self.environment.environment_shape))
+            print()
+            print(self.value.reshape(self.environment.environment_shape))
 
     def get_action(self, current_state):
         V_action = []

@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import hashlib
 import numpy as np
 
 class StatesEncoder:
@@ -18,7 +19,7 @@ class StatesEncoder:
     def get_key(self,states):
         discretized_states = self.discretize_states(states)
         discretized_states.flags.writeable = False
-        return hash(discretized_states.data.tobytes())
+        return discretized_states.data.tobytes()
 
 def reward_function(states):
     angle = states[1]

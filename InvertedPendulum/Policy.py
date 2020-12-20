@@ -28,7 +28,7 @@ class FittedValueIteration:
 
 
 class ValueIteration:
-    def __init__(self,actions,states_encoder,state_transition_model,reward_function,discount_factor=0.9):
+    def __init__(self,actions,states_encoder,state_transition_model,reward_function=None,discount_factor=0.9):
         self.actions = actions
         self.states_encoder = states_encoder
         self.stm = state_transition_model
@@ -48,7 +48,8 @@ class ValueIteration:
                 best_value = value
                 best_action = action
         values = np.array(values)
-        best_action = np.mean(self.actions[values == np.max(values)])
+        #best_action = np.mean(self.actions[values == np.max(values)])
+        best_action = np.random.choice(self.actions[values == np.max(values)])
 #        print(best_action,'\t\t\t', best_value)
 #        print(values)
         return best_action
